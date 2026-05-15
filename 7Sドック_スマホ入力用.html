@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>7Sドック現場診断　入力用（スマホ）</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Hiragino Kaku Gothic Pro','Meiryo',sans-serif;background:#f5f5f2;color:#222;font-size:14px;padding-bottom:80px}
+.header{background:#1a3a5c;color:#fff;padding:12px 16px;position:sticky;top:0;z-index:100}
+.header h1{font-size:15px;font-weight:700;margin-bottom:2px}
+.header p{font-size:11px;opacity:.75}
+.score-bar{background:#fff;border-bottom:1px solid #ddd;padding:10px 16px}
+.score-row{display:flex;gap:8px;margin-bottom:8px}
+.sc{flex:1;background:#f5f5f2;border-radius:8px;padding:7px 6px;text-align:center}
+.sc .lbl{font-size:10px;color:#888;margin-bottom:2px}
+.sc .val{font-size:20px;font-weight:700}
+.sc.main .val{font-size:26px}
+.bar-outer{height:6px;background:#e0e0e0;border-radius:3px;overflow:hidden;margin-bottom:4px}
+.bar-inner{height:6px;border-radius:3px;transition:width .3s,background .3s}
+.rank-txt{font-size:11px;text-align:right;color:#666}
+.prog-row{display:flex;gap:2px;margin-bottom:4px}
+.prog-seg{height:4px;border-radius:2px;background:#e0e0e0}
+.legend{display:flex;gap:8px;flex-wrap:wrap;padding:8px 16px;background:#fff;border-bottom:1px solid #eee}
+.lg{display:flex;align-items:center;gap:4px;font-size:11px;color:#555}
+.lg-b{width:24px;height:20px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700}
+.meta-section{background:#fff;border-bottom:1px solid #ddd;padding:12px 16px}
+.meta-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.meta-row.full{grid-template-columns:1fr}
+.meta-item{display:flex;flex-direction:column;gap:4px}
+.meta-item label{font-size:11px;color:#666}
+.meta-item input,.meta-item select{font-size:14px;padding:8px 10px;border-radius:8px;border:1px solid #ccc;background:#fafaf8;color:#222;width:100%}
+.cat-block{margin-bottom:4px}
+.cat-header{background:#fff;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #eee;cursor:pointer}
+.cat-title{font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px}
+.cat-icon{font-size:16px}
+.cat-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.cat-pct{font-size:13px;font-weight:700}
+.cat-bar-wrap{width:40px;height:4px;background:#e0e0e0;border-radius:2px;overflow:hidden}
+.cat-bar-fill{height:4px;border-radius:2px;transition:width .3s}
+.chev{font-size:12px;color:#999;transition:transform .2s}
+.chev.open{transform:rotate(180deg)}
+.items-body{background:#fafaf8}
+.item-row{padding:12px 16px;border-bottom:1px solid #efefef;background:#fff;margin-bottom:1px}
+.item-top{display:flex;align-items:flex-start;gap:8px;margin-bottom:6px}
+.item-num{font-size:11px;color:#999;min-width:20px;padding-top:2px;flex-shrink:0}
+.item-name{flex:1;font-size:13px;color:#222;line-height:1.5;font-weight:500}
+.rating-group{display:flex;gap:5px;flex-shrink:0;padding-top:1px}
+.r-btn{width:40px;height:34px;border-radius:8px;border:1.5px solid #ccc;font-size:15px;font-weight:600;cursor:pointer;background:#f5f5f2;color:#aaa;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent}
+.r-btn.active-2{background:#EAF3DE !important;color:#27500A !important;border-color:#639922 !important}
+.r-btn.active-1{background:#FAEEDA !important;color:#633806 !important;border-color:#BA7517 !important}
+.r-btn.active-0{background:#FCEBEB !important;color:#791F1F !important;border-color:#E24B4A !important}
+.item-hint{font-size:11px;color:#888;margin-bottom:6px;padding-left:28px;line-height:1.4}
+.item-note{font-size:11px;color:#854F0B;font-style:italic;margin-bottom:6px;padding-left:28px}
+.comment-row{display:flex;gap:6px;align-items:center;padding-left:28px}
+.comment-input{flex:1;font-size:13px;padding:7px 10px;border-radius:8px;border:1px solid #ccc;background:#fafaf8;color:#222}
+.photo-btn{flex-shrink:0;padding:7px 12px;font-size:13px;border-radius:8px;border:1px solid #ccc;background:#fff;color:#444;cursor:pointer;display:flex;align-items:center;gap:4px;white-space:nowrap;-webkit-tap-highlight-color:transparent}
+.photo-input{display:none}
+.photo-preview{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;padding-left:28px}
+.photo-thumb{position:relative;width:70px;height:70px;border-radius:8px;overflow:hidden;border:1px solid #ddd;flex-shrink:0}
+.photo-thumb img{width:100%;height:100%;object-fit:cover}
+.photo-del{position:absolute;top:2px;right:2px;width:20px;height:20px;border-radius:50%;background:rgba(0,0,0,0.6);color:#fff;border:none;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.footer-btns{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #ddd;padding:10px 16px;display:flex;gap:10px;z-index:100}
+.btn-save{flex:1;padding:12px;font-size:13px;font-weight:700;border-radius:10px;border:none;background:#2a7a4a;color:#fff;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.btn-mail{flex:1;padding:12px;font-size:13px;font-weight:700;border-radius:10px;border:none;background:#1a3a5c;color:#fff;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.btn-reset{padding:12px 14px;font-size:13px;border-radius:10px;border:1px solid #ccc;background:#f5f5f2;color:#555;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.mail-section{background:#fff;border-top:1px solid #ddd;padding:10px 16px}
+.mail-section label{font-size:11px;color:#666;display:block;margin-bottom:4px}
+.mail-section input{width:100%;font-size:14px;padding:8px 10px;border-radius:8px;border:1px solid #ccc;background:#fafaf8;color:#222}
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:10px 20px;border-radius:24px;font-size:13px;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;z-index:200}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>🌙 7Sドック現場診断　スマホ入力</h1>
+  <p>フーテックサービス株式会社　スーパーマーケット向け</p>
+</div>
+
+<div class="score-bar">
+  <div class="prog-row" id="prog-segs"></div>
+  <div class="score-row">
+    <div class="sc main">
+      <div class="lbl">総合スコア</div>
+      <div class="val" id="t-score">―</div>
+      <div class="lbl">/ 100点</div>
+    </div>
+    <div class="sc">
+      <div class="lbl">達成率</div>
+      <div class="val" id="t-pct">―</div>
+      <div class="lbl" id="t-rank" style="color:#999">未採点</div>
+    </div>
+    <div class="sc">
+      <div class="lbl">×項目</div>
+      <div class="val" id="t-ng">―</div>
+      <div class="lbl">要対応</div>
+    </div>
+    <div class="sc">
+      <div class="lbl">採点済み</div>
+      <div class="val" id="t-done">―</div>
+      <div class="lbl" id="t-done-of">/ 0項目</div>
+    </div>
+  </div>
+  <div class="bar-outer"><div class="bar-inner" id="main-bar" style="width:0%;background:#ccc"></div></div>
+  <div class="rank-txt" id="rank-lbl">各項目を評価してください</div>
+</div>
+
+<div class="legend">
+  <div class="lg"><span class="lg-b" style="background:#EAF3DE;color:#27500A;border:1.5px solid #639922">〇</span>できている</div>
+  <div class="lg"><span class="lg-b" style="background:#FAEEDA;color:#633806;border:1.5px solid #BA7517">△</span>改善の余地あり</div>
+  <div class="lg"><span class="lg-b" style="background:#FCEBEB;color:#791F1F;border:1.5px solid #E24B4A">×</span>できていない</div>
+</div>
+
+<div class="meta-section">
+  <div class="meta-row full"><div class="meta-item"><label>店舗名</label><input type="text" id="m-store" placeholder="〇〇スーパー 北5条店"></div></div>
+  <div class="meta-row">
+    <div class="meta-item"><label>診断日</label><input type="date" id="m-date"></div>
+    <div class="meta-item"><label>診断者</label><input type="text" id="m-person" placeholder="担当者名"></div>
+  </div>
+  <div class="meta-row full"><div class="meta-item"><label>エリア</label>
+    <select id="m-area"><option>売場全体</option><option>水産部門</option><option>精肉部門</option><option>青果部門</option><option>デリカ部門</option><option>バックヤード</option><option>保管庫</option><option>その他</option></select>
+  </div></div>
+</div>
+
+<div id="cats-container"></div>
+
+<div class="mail-section">
+  <label>送信先メールアドレス（PCのアドレス）</label>
+  <input type="email" id="m-email" placeholder="例：naoki@footech.co.jp">
+</div>
+<div class="footer-btns">
+  <button class="btn-save" onclick="saveData()">💾 ダウンロード</button>
+  <button class="btn-mail" onclick="sendMail()">📧 メール送信</button>
+  <button class="btn-reset" onclick="resetAll()">↺</button>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const CATS=[
+  {id:"s1",label:"整理",icon:"📦",color:"#185FA5",items:[
+    {id:"s1a",label:"不要品・使用期限切れ品が残っていない",hint:"棚・冷蔵庫・バックヤードに不要物がないか"},
+    {id:"s1b",label:"段ボール・梱包資材が適切に片付けられている",hint:"売場・通路・バックヤードの段ボール放置がないか"},
+    {id:"s1c",label:"作業台・調理台の上に不要な物が残っていない",hint:"翌日作業に不要な物が出しっぱなしになっていないか"},
+    {id:"s1d",label:"私物・忘れ物が作業エリアに残っていない",hint:"従業員の私物が食品エリアに放置されていないか"},
+  ]},
+  {id:"s2",label:"整頓",icon:"📋",color:"#185FA5",items:[
+    {id:"s2a",label:"備品・器具が定位置に戻されて保管されている",hint:"包丁・まな板・計量器・トレー等の定位置収納状況"},
+    {id:"s2b",label:"食材は常温・冷蔵・冷凍の指定場所に期限順に保管されている",hint:"温度帯別の保管場所ルールと賞味期限・消費期限の並び順を確認"},
+    {id:"s2c",label:"在庫は適正なボリュームで保管している",hint:"過剰在庫・欠品・通路を塞ぐ積みすぎがないか確認"},
+    {id:"s2d",label:"清掃用具・消耗品が定位置に収納されている",hint:"モップ・バケツ・洗剤等の収納場所への返却状況"},
+  ]},
+  {id:"s3",label:"清掃",icon:"🧹",color:"#185FA5",items:[
+    {id:"s3a",label:"床・壁・天井・換気扇等に汚れがない",hint:"売場・バックヤード・通路の床面・壁面・天井・換気扇カバーを確認"},
+    {id:"s3b",label:"調理機器・スライサー等の汚れが除去されている",hint:"刃・受け皿・隙間の残渣・油汚れを確認"},
+    {id:"s3c",label:"排水溝・ドレン・グリストラップ等は汚れ・ゴミ・詰まりがない",hint:"蓋の有無にかかわらず内部の汚れ・油脂の堆積・詰まりを確認"},
+    {id:"s3d",label:"冷蔵庫・冷凍庫・コールドテーブルの内外が清潔に保たれている",hint:"棚・パッキン・ドア周辺・コールドテーブル内の汚れを確認"},
+  ]},
+  {id:"s4",label:"清潔",icon:"✨",color:"#185FA5",items:[
+    {id:"s4a",label:"清掃チェックリストに今日の記録が正しく記入されている",hint:"記入漏れ・空欄・代筆の有無を確認"},
+    {id:"s4b",label:"ゴミ箱・ゴミ袋の中身が処理され清潔に管理されている。ゴミ置き場・ゴミ保管エリアが整頓されて清潔である",hint:"生ゴミの残留・臭気・ゴミ箱本体の汚れ・ゴミ保管エリアの状態を確認"},
+    {id:"s4c",label:"事務スペース・ロッカー周辺が整理整頓されている",hint:"書類の散乱・食品の持ち込み放置がないか"},
+    {id:"s4d",label:"従業員の健康チェック・身だしなみチェック等が行われている",hint:"健康チェック表の記入状況・チェック記録の有無を確認"},
+  ]},
+  {id:"s5",label:"躾",icon:"📌",color:"#185FA5",items:[
+    {id:"s5a",label:"作業手順書が整備されている",hint:"手順書の有無・最新版かどうか・掲示場所を確認"},
+    {id:"s5b",label:"各種記録（温度管理・作業日報・点検表等）に記入されている",hint:"温度記録表・作業日報・各種点検表の記入状況を確認"},
+    {id:"s5c",label:"掲示物・手順書が所定の位置に正しく掲示されている",hint:"破れ・剥がれ・古い掲示物が残っていないか"},
+    {id:"s5d",label:"前回指摘事項に対する改善が実施されている",hint:"前回診断で指摘した項目の改善状況を確認",note:"初回点検の場合は〇にしてください"},
+  ]},
+  {id:"hy",label:"衛生管理",icon:"🛡️",color:"#A32D2D",items:[
+    {id:"hy1",label:"手洗い設備に石けん・ペーパータオル・消毒液が補充されている",hint:"閉店後に石けん・ペーパータオル・消毒液が切れたままになっていないか。残量・補充状況を確認"},
+    {id:"hy2",label:"まな板・包丁・トレー等が洗浄・殺菌後に適切に保管されている",hint:"洗浄後の器具が清潔な状態で保管されているか"},
+    {id:"hy3",label:"生鮮品と加熱食品・アレルゲン等が交差しない状態で保管されている",hint:"冷蔵庫内の生鮮品・惣菜・アレルゲン食材の分離状況"},
+    {id:"hy4",label:"食品が適切にラップ・蓋をされて保管されている",hint:"剥き出しのまま冷蔵庫に保管されていないか"},
+    {id:"hy5",label:"洗浄剤・殺菌剤・消毒液が食品・器具から離れた場所に保管されている",hint:"薬剤・消毒液と食品・器具の混在保管がないか"},
+    {id:"hy6",label:"異物混入防止対策ができている。持ち込み禁止物の持ち込みがない",hint:"輪ゴム・クリップ・割れた資材等の放置がないか。私物・装飾品・ペン等の持ち込み禁止物を確認"},
+    {id:"hy7",label:"防虫・防鼠対策ができている",hint:"粘着トラップの設置・侵入口の閉塞状況・害虫害獣の形跡（糞・死骸・食害痕）がないか確認"},
+  ]},
+  {id:"sf",label:"安全衛生",icon:"⚠️",color:"#854F0B",items:[
+    {id:"sf1",label:"刃物（包丁・スライサー刃等）が安全な場所に収納されている",hint:"刃が露出したまま放置されていないか・鞘・ケースの使用"},
+    {id:"sf2",label:"消火器が所定位置に設置され通路が確保されている",hint:"消火器の前に物が積まれていないか・使用期限を確認"},
+    {id:"sf3",label:"非常口・避難通路に障害物がなく標識が点灯している",hint:"段ボール・台車・在庫品による通路の塞ぎがないか"},
+    {id:"sf4",label:"濡れた床・段差など転倒リスクのある箇所がない",hint:"水漏れ・結露・破損タイルなど滑り・つまずきの危険箇所"},
+    {id:"sf5",label:"電気設備・コンセント周辺に水・可燃物が置かれていない",hint:"タコ足配線・コードの束ね・コンセント周辺の状態を確認"},
+    {id:"sf6",label:"重量物・高積み在庫が安全に固定・積載されている",hint:"崩れる恐れのある積み方・転倒防止措置の有無"},
+    {id:"sf7",label:"火災防止対策ができている",hint:"ガスの元栓・コンロ等の火気が確実に閉栓・消火されているか。ストーブ・ヒーター周辺に可燃物が置かれていないか"},
+    {id:"sf8",label:"照度管理ができている",hint:"暗い箇所・切れた照明がないか。バックヤード・倉庫・階段・トイレ等の照明を確認"},
+  ]},
+];
+
+const scores={},comms={},photos={};
+let totalItems=0;
+const itemIndex={};
+let counter=1;
+CATS.forEach(c=>c.items.forEach(it=>{
+  scores[it.id]=null;comms[it.id]='';photos[it.id]=[];
+  itemIndex[it.id]=counter++;totalItems++;
+}));
+
+const RATING=[{sym:'〇',val:2,cls:'active-2'},{sym:'△',val:1,cls:'active-1'},{sym:'×',val:0,cls:'active-0'}];
+
+function sc(p){if(p>=80)return'#0F6E56';if(p>=60)return'#3B6D11';if(p>=40)return'#854F0B';return'#A32D2D';}
+function ri(p){
+  if(p>=90)return{l:'S 優秀',c:'#0F6E56'};if(p>=80)return{l:'A 良好',c:'#3B6D11'};
+  if(p>=70)return{l:'B 概ね良好',c:'#639922'};if(p>=60)return{l:'C 要改善',c:'#854F0B'};
+  if(p>=40)return{l:'D 問題あり',c:'#993C1D'};return{l:'E 早急対応',c:'#A32D2D'};
+}
+
+function buildUI(){
+  const cont=document.getElementById('cats-container');
+  const segs=document.getElementById('prog-segs');
+  segs.innerHTML='';
+  document.getElementById('t-done-of').textContent='/ '+totalItems+'項目';
+  CATS.forEach(c=>{
+    segs.innerHTML+=`<div class="prog-seg" id="pseg-${c.id}" style="flex:${c.items.length}"></div>`;
+    const div=document.createElement('div');
+    div.className='cat-block';
+    div.innerHTML=`
+<div class="cat-header" onclick="toggleCat('cb-${c.id}',this)">
+  <div class="cat-title"><span class="cat-icon">${c.icon}</span>${c.label}</div>
+  <div class="cat-right">
+    <div class="cat-bar-wrap"><div class="cat-bar-fill" id="cbar-${c.id}" style="width:0%;background:${c.color}"></div></div>
+    <span class="cat-pct" id="cpct-${c.id}" style="color:#999">―</span>
+    <span class="chev open" id="chev-${c.id}">▼</span>
+  </div>
+</div>
+<div class="items-body" id="cb-${c.id}">
+${c.items.map(it=>`
+<div class="item-row">
+  <div class="item-top">
+    <div class="item-num">${itemIndex[it.id]}.</div>
+    <div class="item-name">${it.label}</div>
+    <div class="rating-group">
+      ${RATING.map(r=>`<button class="r-btn" id="rb-${it.id}-${r.val}" onclick="rate('${it.id}',${r.val})">${r.sym}</button>`).join('')}
+    </div>
+  </div>
+  <div class="item-hint">${it.hint}</div>
+  ${it.note?`<div class="item-note">※ ${it.note}</div>`:''}
+  <div class="comment-row">
+    <input class="comment-input" type="text" placeholder="コメント・改善メモ" oninput="comms['${it.id}']=this.value" id="cm-${it.id}">
+    <button class="photo-btn" onclick="document.getElementById('pi-${it.id}').click()">📷 写真</button>
+    <input class="photo-input" type="file" accept="image/*" capture="environment" id="pi-${it.id}" onchange="addPhoto('${it.id}',this)">
+  </div>
+  <div class="photo-preview" id="pp-${it.id}"></div>
+</div>`).join('')}
+</div>`;
+    cont.appendChild(div);
+  });
+}
+
+function toggleCat(bodyId,hdr){
+  const body=document.getElementById(bodyId);
+  const id=bodyId.replace('cb-','');
+  const chev=document.getElementById('chev-'+id);
+  const open=body.style.display!=='none';
+  body.style.display=open?'none':'';
+  if(chev)chev.classList.toggle('open',!open);
+}
+
+function rate(id,val){
+  scores[id]=val;
+  RATING.forEach(r=>{
+    const b=document.getElementById(`rb-${id}-${r.val}`);
+    if(b)b.className='r-btn'+(r.val===val?' '+r.cls:'');
+  });
+  updateAll();
+}
+
+function addPhoto(id,input){
+  Array.from(input.files).forEach(file=>{
+    const reader=new FileReader();
+    reader.onload=e=>{photos[id].push(e.target.result);renderPhotos(id);};
+    reader.readAsDataURL(file);
+  });
+  input.value='';
+}
+
+function renderPhotos(id){
+  const p=document.getElementById('pp-'+id);
+  if(!p)return;
+  p.innerHTML=photos[id].map((src,i)=>`
+<div class="photo-thumb">
+  <img src="${src}" alt="写真${i+1}">
+  <button class="photo-del" onclick="delPhoto('${id}',${i})">×</button>
+</div>`).join('');
+}
+
+function delPhoto(id,idx){photos[id].splice(idx,1);renderPhotos(id);}
+
+function updateAll(){
+  const rated=CATS.flatMap(c=>c.items).filter(it=>scores[it.id]!==null);
+  CATS.forEach(c=>{
+    const r=c.items.filter(it=>scores[it.id]!==null);
+    const el_pct=document.getElementById('cpct-'+c.id);
+    const el_bar=document.getElementById('cbar-'+c.id);
+    const el_seg=document.getElementById('pseg-'+c.id);
+    if(!r.length){
+      if(el_pct){el_pct.textContent='―';el_pct.style.color='#999';}
+      if(el_bar)el_bar.style.width='0%';
+      if(el_seg)el_seg.style.background='#e0e0e0';
+      return;
+    }
+    const cs=r.reduce((a,it)=>a+scores[it.id],0);
+    const cp=Math.round(cs/(r.length*2)*100);
+    const col=sc(cp);
+    if(el_pct){el_pct.textContent=cp+'%';el_pct.style.color=col;}
+    if(el_bar){el_bar.style.width=cp+'%';el_bar.style.background=col;}
+    if(el_seg)el_seg.style.background=col;
+  });
+  if(!rated.length){
+    ['t-score','t-pct','t-ng','t-done'].forEach(id=>document.getElementById(id).textContent='―');
+    document.getElementById('t-rank').textContent='未採点';
+    document.getElementById('main-bar').style.width='0%';
+    document.getElementById('rank-lbl').textContent='各項目を評価してください';
+    return;
+  }
+  const rMax=rated.length*2;
+  const rScore=rated.reduce((a,it)=>a+scores[it.id],0);
+  const pct=Math.round(rScore/rMax*100);
+  const r=ri(pct);
+  const ng=rated.filter(it=>scores[it.id]===0).length;
+  document.getElementById('t-score').textContent=pct;
+  document.getElementById('t-score').style.color=r.c;
+  document.getElementById('t-pct').textContent=pct+'%';
+  document.getElementById('t-pct').style.color=r.c;
+  document.getElementById('t-rank').textContent=r.l;
+  document.getElementById('t-rank').style.color=r.c;
+  document.getElementById('t-ng').textContent=ng;
+  document.getElementById('t-ng').style.color=ng>0?'#A32D2D':'#3B6D11';
+  document.getElementById('t-done').textContent=rated.length;
+  document.getElementById('main-bar').style.width=pct+'%';
+  document.getElementById('main-bar').style.background=r.c;
+  document.getElementById('rank-lbl').textContent=`ランク ${r.l}　（${rated.length}/${totalItems}項目採点済み）`;
+  document.getElementById('rank-lbl').style.color=r.c;
+}
+
+function saveData(){
+  const data={
+    version:1,
+    meta:{
+      store:document.getElementById('m-store').value,
+      date:document.getElementById('m-date').value,
+      person:document.getElementById('m-person').value,
+      area:document.getElementById('m-area').value,
+      savedAt:new Date().toISOString()
+    },
+    scores:JSON.parse(JSON.stringify(scores)),
+    comms:JSON.parse(JSON.stringify(comms)),
+    photos:JSON.parse(JSON.stringify(photos))
+  };
+  const json=JSON.stringify(data);
+  const blob=new Blob([json],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  const store=data.meta.store||'店舗';
+  const date=data.meta.date||'日付未定';
+  a.href=url;
+  a.download=`診断データ_${store}_${date}.json`;
+  document.body.appendChild(a);a.click();
+  document.body.removeChild(a);URL.revokeObjectURL(url);
+  showToast('💾 ダウンロードしました');
+}
+
+function sendMail(){
+  const email=document.getElementById('m-email').value.trim();
+  if(!email){
+    showToast('⚠️ 送信先メールアドレスを入力してください');
+    return;
+  }
+  const data={
+    version:1,
+    meta:{
+      store:document.getElementById('m-store').value,
+      date:document.getElementById('m-date').value,
+      person:document.getElementById('m-person').value,
+      area:document.getElementById('m-area').value,
+      savedAt:new Date().toISOString()
+    },
+    scores:JSON.parse(JSON.stringify(scores)),
+    comms:JSON.parse(JSON.stringify(comms)),
+    photos:JSON.parse(JSON.stringify(photos))
+  };
+  const json=JSON.stringify(data);
+  const store=data.meta.store||'店舗';
+  const date=data.meta.date||'日付未定';
+  const subject=encodeURIComponent(`【現場診断データ】${store}　${date}`);
+  const body=encodeURIComponent(
+`${store}　${date}の現場診断データです。
+PCのinspection_pc.htmlを開き、「JSONを読み込む」から添付ファイルを読み込んでください。
+
+---
+診断者：${data.meta.person||'（未入力）'}
+エリア：${data.meta.area||'（未入力）'}
+保存日時：${new Date().toLocaleString('ja-JP')}
+---
+
+※このメールにはJSONデータが本文に含まれています。
+以下のデータをコピーして .json ファイルとして保存し、PCのHTMLに読み込んでください。
+
+${json}`
+  );
+  const blob=new Blob([json],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download=`診断データ_${store}_${date}.json`;
+  document.body.appendChild(a);a.click();
+  document.body.removeChild(a);URL.revokeObjectURL(url);
+  setTimeout(()=>{
+    window.location.href=`mailto:${email}?subject=${subject}&body=${body}`;
+  },500);
+  showToast('📧 メールアプリを開いています…');
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+function resetAll(){
+  if(!confirm('入力内容をすべてリセットしますか？'))return;
+  CATS.forEach(c=>c.items.forEach(it=>{
+    scores[it.id]=null;comms[it.id]='';photos[it.id]=[];
+    RATING.forEach(r=>{const b=document.getElementById(`rb-${it.id}-${r.val}`);if(b)b.className='r-btn';});
+    const ci=document.getElementById('cm-'+it.id);if(ci)ci.value='';
+    renderPhotos(it.id);
+  }));
+  ['m-store','m-date','m-person'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  updateAll();
+}
+
+document.getElementById('m-date').value=new Date().toISOString().split('T')[0];
+buildUI();updateAll();
+</script>
+</body>
+</html>
