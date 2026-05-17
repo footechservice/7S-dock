@@ -60,10 +60,11 @@ body{font-family:'Hiragino Kaku Gothic Pro','Meiryo',sans-serif;background:#f5f5
 .photo-thumb{position:relative;width:70px;height:70px;border-radius:8px;overflow:hidden;border:1px solid #ddd;flex-shrink:0}
 .photo-thumb img{width:100%;height:100%;object-fit:cover}
 .photo-del{position:absolute;top:2px;right:2px;width:20px;height:20px;border-radius:50%;background:rgba(0,0,0,0.6);color:#fff;border:none;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center}
-.footer-btns{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #ddd;padding:10px 16px;display:flex;gap:10px;z-index:100}
-.btn-save{flex:1;padding:12px;font-size:13px;font-weight:700;border-radius:10px;border:none;background:#2a7a4a;color:#fff;cursor:pointer;-webkit-tap-highlight-color:transparent}
-.btn-mail{flex:1;padding:12px;font-size:13px;font-weight:700;border-radius:10px;border:none;background:#1a3a5c;color:#fff;cursor:pointer;-webkit-tap-highlight-color:transparent}
-.btn-reset{padding:12px 14px;font-size:13px;border-radius:10px;border:1px solid #ccc;background:#f5f5f2;color:#555;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.footer-btns{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #ddd;padding:8px 12px;display:flex;gap:6px;z-index:100}
+.btn-line{flex:1;padding:11px 2px;font-size:12px;font-weight:700;border-radius:10px;border:none;background:#06C755;color:#fff;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.btn-mail{flex:1;padding:11px 2px;font-size:12px;font-weight:700;border-radius:10px;border:none;background:#1a3a5c;color:#fff;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.btn-save{flex:1;padding:11px 2px;font-size:12px;font-weight:700;border-radius:10px;border:none;background:#2a7a4a;color:#fff;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.btn-reset{padding:11px 12px;font-size:13px;border-radius:10px;border:1px solid #ccc;background:#f5f5f2;color:#555;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .mail-section{background:#fff;border-top:1px solid #ddd;padding:10px 16px}
 .mail-section label{font-size:11px;color:#666;display:block;margin-bottom:4px}
 .mail-section input{width:100%;font-size:14px;padding:8px 10px;border-radius:8px;border:1px solid #ccc;background:#fafaf8;color:#222}
@@ -129,8 +130,9 @@ body{font-family:'Hiragino Kaku Gothic Pro','Meiryo',sans-serif;background:#f5f5
   <input type="email" id="m-email" placeholder="例：naoki@footech.co.jp">
 </div>
 <div class="footer-btns">
-  <button class="btn-save" onclick="saveData()">💾 ダウンロード</button>
-  <button class="btn-mail" onclick="sendMail()">📧 メール送信</button>
+  <button class="btn-line" onclick="sendLine()">📱 LINE</button>
+  <button class="btn-mail" onclick="sendMail()">📧 メール</button>
+  <button class="btn-save" onclick="saveData()">💾 保存</button>
   <button class="btn-reset" onclick="resetAll()">↺</button>
 </div>
 <div class="toast" id="toast"></div>
@@ -269,10 +271,86 @@ function rate(id,val){
 function addPhoto(id,input){
   Array.from(input.files).forEach(file=>{
     const reader=new FileReader();
-    reader.onload=e=>{photos[id].push(e.target.result);renderPhotos(id);};
+    reader.onload=e=>{
+      const img=new Image();
+      img.onload=()=>{
+        const MAX=1280;
+        let w=img.width,h=img.height;
+        if(w>MAX||h>MAX){
+          if(w>h){h=Math.round(h*MAX/w);w=MAX;}
+          else{w=Math.round(w*MAX/h);h=MAX;}
+        }
+        const canvas=document.createElement('canvas');
+        canvas.width=w;canvas.height=h;
+        canvas.getContext('2d').drawImage(img,0,0,w,h);
+        const compressed=canvas.toDataURL('image/jpeg',0.7);
+        photos[id].push(compressed);
+        renderPhotos(id);
+      };
+      img.src=e.target.result;
+    };
     reader.readAsDataURL(file);
   });
   input.value='';
+}
+
+function buildData(){
+  return {
+    version:1,
+    meta:{
+      store:document.getElementById('m-store').value,
+      date:document.getElementById('m-date').value,
+      person:document.getElementById('m-person').value,
+      area:document.getElementById('m-area').value,
+      savedAt:new Date().toISOString()
+    },
+    scores:JSON.parse(JSON.stringify(scores)),
+    comms:JSON.parse(JSON.stringify(comms)),
+    photos:JSON.parse(JSON.stringify(photos))
+  };
+}
+
+function downloadJson(data){
+  const store=data.meta.store||'店舗';
+  const date=data.meta.date||'日付未定';
+  const json=JSON.stringify(data);
+  const blob=new Blob([json],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download=`診断データ_${store}_${date}.json`;
+  document.body.appendChild(a);a.click();
+  document.body.removeChild(a);URL.revokeObjectURL(url);
+  return {store,date};
+}
+
+function sendLine(){
+  const data=buildData();
+  const {store,date}=downloadJson(data);
+  showToast('💾 JSONを保存しました。LINEで添付して送信してください');
+  setTimeout(()=>{
+    window.open('https://line.me/R/nv/chat','_blank');
+  },1000);
+}
+
+function sendMail(){
+  const email=document.getElementById('m-email').value.trim();
+  if(!email){showToast('⚠️ 送信先メールアドレスを入力してください');return;}
+  const data=buildData();
+  const {store,date}=downloadJson(data);
+  const subject=encodeURIComponent(`【現場診断データ】${store}　${date}`);
+  const body=encodeURIComponent(
+`${store}　${date}の現場診断データです。
+ダウンロードされたJSONファイルをこのメールに添付して送信してください。
+
+診断者：${data.meta.person||'（未入力）'}
+エリア：${data.meta.area||'（未入力）'}
+保存日時：${new Date().toLocaleString('ja-JP')}`
+  );
+  showToast('💾 JSONを保存しました。メールに添付して送信してください');
+  setTimeout(()=>{
+    window.location.href=`mailto:${email}?subject=${subject}&body=${body}`;
+  },1000);
 }
 
 function renderPhotos(id){
@@ -335,84 +413,9 @@ function updateAll(){
 }
 
 function saveData(){
-  const data={
-    version:1,
-    meta:{
-      store:document.getElementById('m-store').value,
-      date:document.getElementById('m-date').value,
-      person:document.getElementById('m-person').value,
-      area:document.getElementById('m-area').value,
-      savedAt:new Date().toISOString()
-    },
-    scores:JSON.parse(JSON.stringify(scores)),
-    comms:JSON.parse(JSON.stringify(comms)),
-    photos:JSON.parse(JSON.stringify(photos))
-  };
-  const json=JSON.stringify(data);
-  const blob=new Blob([json],{type:'application/json'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  const store=data.meta.store||'店舗';
-  const date=data.meta.date||'日付未定';
-  a.href=url;
-  a.download=`診断データ_${store}_${date}.json`;
-  document.body.appendChild(a);a.click();
-  document.body.removeChild(a);URL.revokeObjectURL(url);
+  const data=buildData();
+  downloadJson(data);
   showToast('💾 ダウンロードしました');
-}
-
-function sendMail(){
-  const email=document.getElementById('m-email').value.trim();
-  if(!email){
-    showToast('⚠️ 送信先メールアドレスを入力してください');
-    return;
-  }
-  const data={
-    version:1,
-    meta:{
-      store:document.getElementById('m-store').value,
-      date:document.getElementById('m-date').value,
-      person:document.getElementById('m-person').value,
-      area:document.getElementById('m-area').value,
-      savedAt:new Date().toISOString()
-    },
-    scores:JSON.parse(JSON.stringify(scores)),
-    comms:JSON.parse(JSON.stringify(comms)),
-    photos:JSON.parse(JSON.stringify(photos))
-  };
-  const json=JSON.stringify(data);
-  const store=data.meta.store||'店舗';
-  const date=data.meta.date||'日付未定';
-  const subject=encodeURIComponent(`【現場診断データ】${store}　${date}`);
-  const body=encodeURIComponent(
-`${store}　${date}の現場診断データです。
-PCのinspection_pc.htmlを開き、「JSONを読み込む」から添付ファイルを読み込んでください。
-
----
-診断者：${data.meta.person||'（未入力）'}
-エリア：${data.meta.area||'（未入力）'}
-保存日時：${new Date().toLocaleString('ja-JP')}
----
-
-※このメールにはJSONデータが本文に含まれています。
-以下のデータをコピーして .json ファイルとして保存し、PCのHTMLに読み込んでください。
-
-${json}`
-  );
-  // JSONファイルをダウンロード
-  const blob=new Blob([json],{type:'application/json'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url;
-  a.download=`診断データ_${store}_${date}.json`;
-  document.body.appendChild(a);a.click();
-  document.body.removeChild(a);URL.revokeObjectURL(url);
-  // Gmail Web版で開く
-  setTimeout(()=>{
-    const gmailUrl=`https://mail.google.com/mail/?view=cm&to=${encodeURIComponent(email)}&su=${subject}&body=${body}`;
-    window.open(gmailUrl,'_blank');
-  },800);
-  showToast('📧 JSONをダウンロード後、Gmailが開きます');
 }
 
 function showToast(msg){
